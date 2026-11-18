@@ -1,5 +1,8 @@
 # How it works
 
+*This page goes deep on purpose — it's the proof that the homepage summary is real and tested, not just copy.
+You don't need to follow all of it to use the result.*
+
 ## The flow
 
 ```mermaid

@@ -1,5 +1,8 @@
 # Set it up
 
+*You won't run any of this yourself if you hire me for it — this page is here so you (or your own dev team) can
+see exactly what's involved, and so there's a clean reference when I set it up for your account.*
+
 You need Docker and Node 18+. Node is only used for the tests and `build.js`; n8n itself runs in Docker.
 
 ## 1. Run n8n locally

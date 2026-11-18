@@ -109,15 +109,16 @@ gets told immediately. A short morning digest catches anyone who still needs a p
 <p style="text-align:center;font-size:12.5px;color:#9ca3af;margin:4px 0 28px">Every morning: a quick digest flags anyone who still needs a personal follow-up.</p>
 
 <div style="max-width:560px;margin:0 auto 32px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;padding:16px 20px;text-align:center">
-<p style="font-size:13.5px;color:#134e4a;margin:0">Often cited in this space: replying within 5 minutes is associated with a <b>~21x difference in qualifying a lead</b>, versus replying later. No single named study backs the exact number, but it's the industry's own stated reason this matters.</p>
+<p style="font-size:13.5px;color:#134e4a;margin:0">Whoever responds first wins the business <b>about 80% of the time</b> — a 2025 survey of nearly 4,000 B2B buyers (6sense B2B Buyer Experience Report). Being first isn't a nice-to-have here, it's most of the outcome.</p>
 </div>
 
 ## The problem this solves
 
-The business that replies first usually wins the deal — but most small teams check their leads whenever they get a
-free moment, which can be hours later. By then:
+Whoever responds first usually wins the business, not whoever has the best offer — and most small teams check
+their leads whenever they get a free moment, which can be hours later:
 
-- **The lead has already messaged three other businesses** and is talking to whoever answered first.
+- **By the time someone gets to it, the lead has often already heard back from a competitor** and is talking to
+  them instead, simply because they answered first.
 - **A Friday-evening or weekend inquiry sits untouched** until Monday, by which point they've moved on.
 
 FirstReply replies the instant someone shows interest, any time of day, so no one's waiting on you — and a short
@@ -127,3 +128,5 @@ morning digest makes sure a real person still follows up personally on anyone wh
 
 Curious how it actually works under the hood? See [how it works](how-it-works.md) · [set it up](setup.md) ·
 [intake field mapping](intake-mapping.md).
+
+<p style="font-size:11px;color:#9ca3af;margin-top:24px">First-responder-wins figure: 6sense's 2025 B2B Buyer Experience Report, survey of ~4,000 B2B buyers. Survey-based, not a controlled study — treat as directional.</p>
