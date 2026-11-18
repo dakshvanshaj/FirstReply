@@ -73,21 +73,43 @@ gets told immediately. A short morning digest catches anyone who still needs a p
 </div>
 </div>
 
-<div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;margin:36px 0 24px">
-<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;max-width:200px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06)">
-<div style="width:28px;height:28px;border-radius:50%;background:#0f766e;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;margin:0 auto 8px">1</div>
-<div style="font-size:13.5px;color:#1f2937">Someone fills out a form, messages you, or clicks an ad</div>
+<div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:6px;margin:36px 0 10px">
+<div style="width:120px;text-align:center">
+<div style="width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="#262627" aria-hidden="true"><path d="M15.502 13.035c-.5 0-.756-.411-.756-.917 0-.505.252-.894.756-.894.513 0 .756.407.756.894-.004.515-.261.917-.756.917Zm-4.888-1.81c.292 0 .414.17.414.317 0 .357-.365.514-1.126.536 0-.442.253-.854.712-.854Zm-3.241 1.81c-.473 0-.67-.384-.67-.917 0-.527.202-.894.67-.894.477 0 .702.38.702.894 0 .537-.234.917-.702.917Zm-3.997-2.334h-.738l1.224 2.808c-.234.519-.36.648-.522.648-.171 0-.333-.138-.45-.259l-.324.43c.22.232.522.366.832.366.387 0 .685-.224.856-.626l1.413-3.371h-.725l-.738 2.012-.828-2.008Zm19.553.523c.36 0 .432.246.432.823v1.516H24v-1.914c0-.689-.473-.988-.91-.988-.386 0-.742.241-.94.688a.901.901 0 0 0-.891-.688c-.365 0-.73.232-.927.666v-.626h-.64v2.857h.64v-1.22c0-.617.324-1.114.765-1.114.36 0 .427.246.427.823v1.516h.64l-.005-1.225c0-.617.329-1.114.77-1.114Zm-5.1-.523h-.324v2.857h.639v-1.095c0-.693.306-1.163.76-1.163.118 0 .217.005.325.05l.099-.676c-.081-.009-.153-.018-.225-.018-.45 0-.774.309-.964.707V10.7h-.31Zm-2.327-.045c-.846 0-1.418.644-1.418 1.458 0 .845.58 1.475 1.418 1.475.85 0 1.431-.648 1.431-1.475-.004-.818-.594-1.458-1.431-1.458Zm-4.852 2.38c-.333 0-.581-.17-.685-.515.847-.036 1.675-.242 1.675-.988 0-.43-.423-.872-1.03-.872-.82 0-1.374.666-1.374 1.457 0 .828.545 1.476 1.36 1.476.567 0 .927-.228 1.21-.559l-.31-.42c-.329.335-.531.42-.846.42Zm-3.151-2.38c-.324 0-.648.188-.774.483v-.438h-.64v3.98h.64v-1.422c.135.205.445.34.72.34.85 0 1.3-.631 1.3-1.48-.004-.841-.445-1.463-1.246-1.463Zm-4.483-1.1H0v.622h1.18v3.38h.67v-3.38h1.166v-.622Zm9.502 1.145h-.383v.572h.383v2.285h.639v-2.285h.621v-.572h-.621v-.447c0-.286.117-.385.382-.385.1 0 .19.027.311.068l.144-.537c-.117-.067-.351-.094-.504-.094-.612 0-.972.367-.972 1.002v.393Z"/></svg>
 </div>
-<div style="font-size:20px;color:#9ca3af">→</div>
-<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;max-width:200px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06)">
-<div style="width:28px;height:28px;border-radius:50%;background:#0f766e;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;margin:0 auto 8px">2</div>
-<div style="font-size:13.5px;color:#1f2937">They get a reply in seconds, mentioning exactly what they asked about</div>
+<div style="font-size:13px;font-weight:600;color:#1f2937">They reach out</div>
+<div style="font-size:11.5px;color:#9ca3af">form, ad, or message</div>
 </div>
-<div style="font-size:20px;color:#9ca3af">→</div>
-<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;max-width:200px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06)">
-<div style="width:28px;height:28px;border-radius:50%;background:#0f766e;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;margin:0 auto 8px">3</div>
-<div style="font-size:13.5px;color:#1f2937">A quick morning digest flags anyone who still needs a personal follow-up</div>
+<div style="font-size:20px;color:#9ca3af;padding-top:12px">→</div>
+<div style="width:120px;text-align:center">
+<div style="width:44px;height:44px;border-radius:50%;background:#0f766e;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
 </div>
+<div style="font-size:13px;font-weight:600;color:#1f2937">FirstReply replies</div>
+<div style="font-size:11.5px;color:#9ca3af">in seconds, about what they asked</div>
+</div>
+<div style="font-size:20px;color:#9ca3af;padding-top:12px">→</div>
+<div style="width:120px;text-align:center">
+<div style="width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="#4A154B" aria-hidden="true"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+</div>
+<div style="font-size:13px;font-weight:600;color:#1f2937">Your team's told</div>
+<div style="font-size:11.5px;color:#9ca3af">Slack, WhatsApp, or email</div>
+</div>
+<div style="font-size:20px;color:#9ca3af;padding-top:12px">→</div>
+<div style="width:120px;text-align:center">
+<div style="width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="#18BFFF" aria-hidden="true"><path d="M11.992 1.966c-.434 0-.87.086-1.28.257L1.779 5.917c-.503.208-.49.908.012 1.116l8.982 3.558a3.266 3.266 0 0 0 2.454 0l8.982-3.558c.503-.196.503-.908.012-1.116l-8.957-3.694a3.255 3.255 0 0 0-1.272-.257zM23.4 8.056a.589.589 0 0 0-.222.045l-10.012 3.877a.612.612 0 0 0-.38.564v8.896a.6.6 0 0 0 .821.552L23.62 18.1a.583.583 0 0 0 .38-.551V8.653a.6.6 0 0 0-.6-.596zM.676 8.095a.644.644 0 0 0-.48.19C.086 8.396 0 8.53 0 8.69v8.355c0 .442.515.737.908.54l6.27-3.006.307-.147 2.969-1.436c.466-.22.43-.908-.061-1.092L.883 8.138a.57.57 0 0 0-.207-.044z"/></svg>
+</div>
+<div style="font-size:13px;font-weight:600;color:#1f2937">Logged automatically</div>
+<div style="font-size:11.5px;color:#9ca3af">Sheets, Airtable, your CRM</div>
+</div>
+</div>
+<p style="text-align:center;font-size:12.5px;color:#9ca3af;margin:4px 0 28px">Every morning: a quick digest flags anyone who still needs a personal follow-up.</p>
+
+<div style="max-width:560px;margin:0 auto 32px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;padding:16px 20px;text-align:center">
+<p style="font-size:13.5px;color:#134e4a;margin:0">Often cited in this space: replying within 5 minutes is associated with a <b>~21x difference in qualifying a lead</b>, versus replying later. No single named study backs the exact number, but it's the industry's own stated reason this matters.</p>
 </div>
 
 ## The problem this solves
