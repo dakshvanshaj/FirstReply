@@ -1,0 +1,702 @@
+{
+  "id": "firstReplyLeads0001",
+  "name": "FirstReply – instant lead response",
+  "active": false,
+  "nodes": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "name": "Note – what this is",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -320
+      ],
+      "parameters": {
+        "content": "## FirstReply\nA new lead (form, Meta Lead Ad, WhatsApp, email) → instant reply to the lead → alert to the owner → logged in the Leads sheet.\nEvery morning: a digest of who still needs a human follow-up.\nRules live in one place: the Code nodes (source: respond.js). Customize `fromIntake()` for your actual intake source.",
+        "width": 580,
+        "height": 220,
+        "color": 7
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "name": "Note – sample payload",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        190
+      ],
+      "parameters": {
+        "content": "### Sample payload\n`send-test.sh` posts a generic lead-shaped sample.\nTo go live: point your form/ad platform’s webhook here (or use its native webhook/Zapier-style integration) with header `X-Intake-Secret`. Capture one real payload and adjust `fromIntake()` only — see docs/intake-mapping.md for five common sources.",
+        "width": 460,
+        "height": 220,
+        "color": 3
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "name": "Note – WhatsApp",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        260
+      ],
+      "parameters": {
+        "content": "### WhatsApp replies\nReplying to a lead on WhatsApp before they’ve messaged you first requires a pre-approved message template (Meta’s rule, not this workflow’s). Email replies need no approval, so that’s the reliable default here; swap in an approved WhatsApp template (or Twilio for SMS) the same way CloseLoop swaps its WhatsApp node.",
+        "width": 460,
+        "height": 220,
+        "color": 4
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "name": "Note – after hours",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        590
+      ],
+      "parameters": {
+        "content": "### After hours\nThe reply to the lead always goes out instantly, any time, any day — that’s the whole point. Only the owner alert gets flagged “needs personal follow-up,” so nothing sits unanswered just because it arrived at 2am.",
+        "width": 460,
+        "height": 160,
+        "color": 5
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "name": "Intake – new lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-lead-intake",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "webhookId": "b8d2f8d3-2e8f-5d66-af2b-2b3c4d5e6f7a",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "frIntakeSecret0001",
+          "name": "Intake webhook secret"
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "name": "Read Settings",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Settings"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "frGoogleSheets01",
+          "name": "Google Sheets account"
+        }
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "name": "Read existing lead",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Lead ID",
+              "lookupValue": "={{ $('Intake – new lead').first().json.body.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "frGoogleSheets01",
+          "name": "Google Sheets account"
+        }
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "name": "Build Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Business rules for the instant lead-response automation.\n// Pure functions; the same text is inlined into the n8n Code nodes by build.js.\n// All times are IST wall-clock, held as \"fake UTC\" Dates (read with getUTC*), so host timezone never matters.\n\nconst IST_MS = 330 * 60000;\nconst DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];\nconst MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];\n\nconst ist = (d) => new Date(d.getTime() + IST_MS);\nconst pad = (n) => String(n).padStart(2, '0');\nconst fmt = (f) => `${f.getUTCFullYear()}-${pad(f.getUTCMonth() + 1)}-${pad(f.getUTCDate())} ${pad(f.getUTCHours())}:${pad(f.getUTCMinutes())}`;\nconst nice = (f) => `${DOW[f.getUTCDay()]} ${f.getUTCDate()} ${MON[f.getUTCMonth()]} ${pad(f.getUTCHours())}:${pad(f.getUTCMinutes())}`;\n\n// Blank everywhere means '', 'NaN', 'N/A' or missing.\nfunction clean(v) {\n  const s = v == null ? '' : String(v).trim();\n  return ['', 'nan', 'n/a'].includes(s.toLowerCase()) ? '' : s;\n}\n\n// The ONLY place that knows a specific intake source's field names. Capture one real payload\n// (Typeform, Google Forms, Meta Lead Ads, a WhatsApp inbound message, or a generic contact-form\n// webhook) and adjust here — see docs/intake-mapping.md for five common sources.\nfunction fromIntake(body) {\n  const b = body || {};\n  return {\n    leadId: clean(b.id || b.response_id || b.lead_id),\n    name: clean(b.name || b.full_name || [clean(b.first_name), clean(b.last_name)].filter(Boolean).join(' ')),\n    phone: clean(b.phone),\n    email: clean(b.email),\n    source: clean(b.source || b.platform) || 'form',\n    team: clean(b.team),\n    interest: clean(b.interest || b.message || b.query || b.inquiry),\n  };\n}\n\nconst hasContact = (lead) => !!(lead.phone || lead.email);\nconst REQUIRED = [['name', 'name'], ['interest', 'what they’re asking about']];\n\n// Outside Mon-Fri 9:00-18:00 IST. The reply still goes out instantly either way — that's the whole\n// point — this only flags that a human needs to personally follow up once the day starts.\nfunction isAfterHours(receivedAt) {\n  const t = ist(receivedAt);\n  const dow = t.getUTCDay();\n  if (dow === 0 || dow === 6) return true;\n  const hour = t.getUTCHours();\n  return hour < 9 || hour >= 18;\n}\n\nfunction ownerFor(team, settings) {\n  const s = settings || [];\n  const reachable = (r) => clean(r.WhatsApp) || clean(r.Email);\n  const c = s.find((r) => r.Role === 'Team Owner' && String(r.Team).trim().toLowerCase() === String(team || '').trim().toLowerCase() && reachable(r))\n    || s.find((r) => r.Role === 'Fallback Owner' && reachable(r));\n  return c ? { Name: c.Name, WhatsApp: clean(c.WhatsApp), Email: clean(c.Email) } : null;\n}\n\n// The instant reply sent back to the LEAD — plain text, since it has to work identically whether\n// it goes out over email, WhatsApp or SMS.\nfunction buildReplyText(lead) {\n  const name = lead.name || 'there';\n  const interest = lead.interest || 'your inquiry';\n  return `Hi ${name}, thanks for reaching out about \"${interest}\" — we got your message and someone from our team will follow up with you shortly.`;\n}\n\n// existing = the Leads sheet row already holding this lead, or null. An update keeps Status.\nfunction buildResponse(lead, receivedAt, settings, existing) {\n  const flags = [];\n  const missing = REQUIRED.filter(([k]) => !lead[k]).map(([, label]) => label);\n  if (missing.length) flags.push('Missing: ' + missing.join(', '));\n  if (!hasContact(lead)) flags.push('No phone or email to reply to');\n  if (isAfterHours(receivedAt)) flags.push('Arrived after hours – needs personal follow-up');\n  const c = ownerFor(lead.team, settings);\n  if (!c) flags.push(`No owner set for team ${lead.team || '?'}`);\n  const row = {\n    'Received at': (existing && existing['Received at']) || fmt(ist(receivedAt)), 'Lead ID': lead.leadId || `no-id-${receivedAt.getTime()}`,\n    Name: lead.name, Phone: lead.phone, Email: lead.email, Source: lead.source, Interest: lead.interest,\n    Owner: (c && c.Name) || '', Status: (existing && existing.Status) || 'New', Flags: flags.join('; '),\n  };\n  const replyText = hasContact(lead) ? buildReplyText(lead) : '';\n  const ownerText = `New lead from ${lead.source || 'form'}: ${lead.name || '?'} asking about \"${lead.interest || '?'}\". ${replyText ? 'Replied instantly.' : 'Could not reply — no phone or email.'}`;\n  const subject = `New lead: ${lead.name || '?'} — ${lead.interest || 'no interest given'}`;\n  return {\n    row, replyPhone: lead.phone || '', replyEmail: lead.email || '', replyText,\n    to: (c && c.WhatsApp) || null, ownerEmail: c ? c.Email : '', ownerText,\n    subject: row.Flags ? `⚠ ${subject}` : subject, updated: !!existing,\n  };\n}\n\n// Morning digest: yesterday's leads that still need a human follow-up (flagged, or after-hours).\nfunction dailyDigest(rows, now, sheetUrl) {\n  const n = ist(now);\n  const today = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate());\n  const since = today - 86400000;\n  const recent = (rows || []).filter((r) => { const d = ist2(r['Received at']); return d && d.getTime() >= since; });\n  const needsFollowUp = recent.filter((r) => r.Flags && r.Status === 'New');\n  return [\n    `Leads digest – ${nice(n)}`,\n    `Replied to in the last 24h: ${recent.length}`,\n    `Still need a human follow-up: ${needsFollowUp.length}`,\n    ...(needsFollowUp.length ? needsFollowUp.slice(0, 5).map((r) => `- ${r.Name} (${r.Source}): ${r.Flags}`) : []),\n    `Full list: ${sheetUrl}`,\n  ].join('\\n');\n}\n\nfunction ist2(s) {\n  const m = String(s || '').match(/^(\\d{4})-(\\d{2})-(\\d{2})(?:[ T](\\d{2}):(\\d{2}))?/);\n  return m ? new Date(Date.UTC(+m[1], m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0))) : null;\n}\n\n// ---- HTML email (inline styles only: email clients drop <style> blocks) ----\nconst esc = (v) => String(v == null ? '' : v).replace(/[&<>\"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' })[ch]);\nconst FONT = \"font-family:Arial,Helvetica,sans-serif;color:#1f2937;\";\nfunction shell(title, colour, body, sheetUrl, footer) {\n  return `<div style=\"${FONT}max-width:560px;margin:0 auto;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden\">`\n    + `<div style=\"background:${colour};color:#fff;padding:14px 18px;font-size:18px;font-weight:bold\">${title}</div>`\n    + `<div style=\"padding:16px 18px\">${body}`\n    + `<p style=\"margin:18px 0 4px\"><a href=\"${esc(sheetUrl)}\" style=\"background:#0f766e;color:#fff;text-decoration:none;padding:9px 14px;border-radius:6px;font-size:14px;display:inline-block\">Open Leads sheet</a></p>`\n    + `</div><div style=\"padding:10px 18px;background:#f9fafb;color:#6b7280;font-size:12px\">${footer}</div></div>`;\n}\nconst tr = (k, v, strong) => `<tr><td style=\"padding:6px 10px 6px 0;color:#6b7280;font-size:14px;white-space:nowrap;vertical-align:top\">${k}</td>`\n  + `<td style=\"padding:6px 0;font-size:14px;${strong ? 'font-weight:bold;' : ''}\">${v || '<span style=\"color:#b91c1c\">not set</span>'}</td></tr>`;\n\nfunction alertHtml(resp, sheetUrl) {\n  const r = resp.row;\n  const banner = r.Flags\n    ? `<div style=\"background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;color:#92400e;padding:10px 12px;margin-bottom:14px;font-size:14px\">⚠ ${esc(r.Flags)}</div>` : '';\n  const body = banner + `<table style=\"border-collapse:collapse;width:100%\">`\n    + tr('Name', esc(r.Name), true) + tr('Source', esc(r.Source)) + tr('Asking about', esc(r.Interest))\n    + tr('Phone', esc(r.Phone)) + tr('Email', esc(r.Email)) + tr('Owner', esc(r.Owner)) + tr('Status', esc(r.Status))\n    + `</table>`;\n  const title = `${resp.updated ? 'Updated: ' : ''}New lead${r.Name ? ` – ${esc(r.Name)}` : ''}`;\n  return shell(title, r.Flags ? '#b45309' : '#0f766e', body, sheetUrl, 'Sent the moment a new lead comes in — the lead already got an instant reply; this is for your team.');\n}\n\nfunction digestHtml(rows, now, sheetUrl) {\n  const n = ist(now);\n  const today = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate());\n  const since = today - 86400000;\n  const recent = (rows || []).filter((r) => { const d = ist2(r['Received at']); return d && d.getTime() >= since; });\n  const needsFollowUp = recent.filter((r) => r.Flags && r.Status === 'New');\n  const tile = (label, num, colour) => `<td style=\"padding:4px;width:50%\"><div style=\"border:1px solid #e5e7eb;border-radius:6px;padding:10px;text-align:center\">`\n    + `<div style=\"font-size:24px;font-weight:bold;color:${colour}\">${num}</div><div style=\"font-size:12px;color:#6b7280\">${label}</div></div></td>`;\n  const body = `<table style=\"border-collapse:collapse;width:100%\"><tr>`\n    + tile('Replied in last 24h', recent.length, '#0f766e')\n    + tile('Still need a human', needsFollowUp.length, needsFollowUp.length ? '#b45309' : '#0f766e')\n    + `</tr></table>`\n    + (needsFollowUp.length ? `<p style=\"margin:16px 0 6px;font-weight:bold;font-size:14px\">Need a human follow-up</p><ul style=\"margin:0;padding-left:18px;font-size:14px\">${needsFollowUp.map((r) => `<li style=\"margin:3px 0\">${esc(r.Name)} (${esc(r.Source)}): ${esc(r.Flags)}</li>`).join('')}</ul>` : '');\n  return shell(`Leads digest – ${nice(n)}`, '#0f766e', body, sheetUrl, 'Sent every morning — everything else already got an instant reply overnight.');\n}\n\nif (typeof module !== 'undefined') module.exports = { fromIntake, hasContact, isAfterHours, ownerFor, buildReplyText, buildResponse, dailyDigest, alertHtml, digestHtml };\n\nconst lead = fromIntake($('Intake – new lead').first().json.body);\nconst settings = $('Read Settings').all().map((i) => i.json);\nconst existing = lead.leadId ? ($('Read existing lead').all().map((i) => i.json).find((r) => String(r['Lead ID']) === lead.leadId) || null) : null;\nconst r = buildResponse(lead, new Date(), settings, existing);\nreturn [{ json: { ...r.row, _replyPhone: r.replyPhone, _replyEmail: r.replyEmail, _replyText: r.replyText, _ownerTo: r.to || '', _ownerEmail: r.ownerEmail || '', _ownerText: r.ownerText, _subject: r.subject, _html: alertHtml(r, 'https://docs.google.com/spreadsheets/d/REPLACE_WITH_SHEET_ID') } }];"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "name": "Leads – add or update",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Lead ID"
+          ],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW",
+          "handlingExtraData": "ignoreIt"
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "frGoogleSheets01",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "name": "Has contact to reply to?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        -140
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d0ffee00-0000-4000-8000-000000000001",
+              "leftValue": "={{ $('Build Response').item.json._replyEmail }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "d0ffee00-0000-4000-8000-000000000002",
+              "leftValue": "={{ $('Build Response').item.json._replyPhone }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "name": "Email – reply to lead",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1320,
+        -220
+      ],
+      "parameters": {
+        "sendTo": "={{ $('Build Response').item.json._replyEmail }}",
+        "subject": "={{ 'Re: ' + $('Build Response').item.json.Interest }}",
+        "emailType": "text",
+        "message": "={{ $('Build Response').item.json._replyText }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "frGmail00000000001",
+          "name": "Gmail account"
+        }
+      },
+      "webhookId": "9e1a0000-0000-4000-8000-000000000011"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000012",
+      "name": "WhatsApp – reply to lead (needs approved template)",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        -60
+      ],
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "REPLACE_WITH_WHATSAPP_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Build Response').item.json._replyPhone }}",
+        "textBody": "={{ $('Build Response').item.json._replyText }}",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "whatsAppApi": {
+          "id": "frWhatsApp0000001",
+          "name": "WhatsApp account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000013",
+      "name": "Has owner contact?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        140
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d0ffee00-0000-4000-8000-000000000003",
+              "leftValue": "={{ $('Build Response').item.json._ownerEmail }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "d0ffee00-0000-4000-8000-000000000004",
+              "leftValue": "={{ $('Build Response').item.json._ownerTo }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000014",
+      "name": "Email – alert owner",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1320,
+        60
+      ],
+      "parameters": {
+        "sendTo": "={{ $('Build Response').item.json._ownerEmail }}",
+        "subject": "={{ $('Build Response').item.json._subject }}",
+        "emailType": "html",
+        "message": "={{ $('Build Response').item.json._html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "frGmail00000000001",
+          "name": "Gmail account"
+        }
+      },
+      "webhookId": "9e1a0000-0000-4000-8000-000000000014"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000015",
+      "name": "WhatsApp – alert owner",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        220
+      ],
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "REPLACE_WITH_WHATSAPP_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Build Response').item.json._ownerTo }}",
+        "textBody": "={{ $('Build Response').item.json._ownerText }}",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "whatsAppApi": {
+          "id": "frWhatsApp0000001",
+          "name": "WhatsApp account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000016",
+      "name": "Every morning",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        900
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000017",
+      "name": "Read Leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        220,
+        900
+      ],
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "frGoogleSheets01",
+          "name": "Google Sheets account"
+        }
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000018",
+      "name": "Read Settings (Digest)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        440,
+        900
+      ],
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REPLACE_WITH_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Settings"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "frGoogleSheets01",
+          "name": "Google Sheets account"
+        }
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000019",
+      "name": "Build digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        900
+      ],
+      "parameters": {
+        "jsCode": "// Business rules for the instant lead-response automation.\n// Pure functions; the same text is inlined into the n8n Code nodes by build.js.\n// All times are IST wall-clock, held as \"fake UTC\" Dates (read with getUTC*), so host timezone never matters.\n\nconst IST_MS = 330 * 60000;\nconst DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];\nconst MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];\n\nconst ist = (d) => new Date(d.getTime() + IST_MS);\nconst pad = (n) => String(n).padStart(2, '0');\nconst fmt = (f) => `${f.getUTCFullYear()}-${pad(f.getUTCMonth() + 1)}-${pad(f.getUTCDate())} ${pad(f.getUTCHours())}:${pad(f.getUTCMinutes())}`;\nconst nice = (f) => `${DOW[f.getUTCDay()]} ${f.getUTCDate()} ${MON[f.getUTCMonth()]} ${pad(f.getUTCHours())}:${pad(f.getUTCMinutes())}`;\n\n// Blank everywhere means '', 'NaN', 'N/A' or missing.\nfunction clean(v) {\n  const s = v == null ? '' : String(v).trim();\n  return ['', 'nan', 'n/a'].includes(s.toLowerCase()) ? '' : s;\n}\n\n// The ONLY place that knows a specific intake source's field names. Capture one real payload\n// (Typeform, Google Forms, Meta Lead Ads, a WhatsApp inbound message, or a generic contact-form\n// webhook) and adjust here — see docs/intake-mapping.md for five common sources.\nfunction fromIntake(body) {\n  const b = body || {};\n  return {\n    leadId: clean(b.id || b.response_id || b.lead_id),\n    name: clean(b.name || b.full_name || [clean(b.first_name), clean(b.last_name)].filter(Boolean).join(' ')),\n    phone: clean(b.phone),\n    email: clean(b.email),\n    source: clean(b.source || b.platform) || 'form',\n    team: clean(b.team),\n    interest: clean(b.interest || b.message || b.query || b.inquiry),\n  };\n}\n\nconst hasContact = (lead) => !!(lead.phone || lead.email);\nconst REQUIRED = [['name', 'name'], ['interest', 'what they’re asking about']];\n\n// Outside Mon-Fri 9:00-18:00 IST. The reply still goes out instantly either way — that's the whole\n// point — this only flags that a human needs to personally follow up once the day starts.\nfunction isAfterHours(receivedAt) {\n  const t = ist(receivedAt);\n  const dow = t.getUTCDay();\n  if (dow === 0 || dow === 6) return true;\n  const hour = t.getUTCHours();\n  return hour < 9 || hour >= 18;\n}\n\nfunction ownerFor(team, settings) {\n  const s = settings || [];\n  const reachable = (r) => clean(r.WhatsApp) || clean(r.Email);\n  const c = s.find((r) => r.Role === 'Team Owner' && String(r.Team).trim().toLowerCase() === String(team || '').trim().toLowerCase() && reachable(r))\n    || s.find((r) => r.Role === 'Fallback Owner' && reachable(r));\n  return c ? { Name: c.Name, WhatsApp: clean(c.WhatsApp), Email: clean(c.Email) } : null;\n}\n\n// The instant reply sent back to the LEAD — plain text, since it has to work identically whether\n// it goes out over email, WhatsApp or SMS.\nfunction buildReplyText(lead) {\n  const name = lead.name || 'there';\n  const interest = lead.interest || 'your inquiry';\n  return `Hi ${name}, thanks for reaching out about \"${interest}\" — we got your message and someone from our team will follow up with you shortly.`;\n}\n\n// existing = the Leads sheet row already holding this lead, or null. An update keeps Status.\nfunction buildResponse(lead, receivedAt, settings, existing) {\n  const flags = [];\n  const missing = REQUIRED.filter(([k]) => !lead[k]).map(([, label]) => label);\n  if (missing.length) flags.push('Missing: ' + missing.join(', '));\n  if (!hasContact(lead)) flags.push('No phone or email to reply to');\n  if (isAfterHours(receivedAt)) flags.push('Arrived after hours – needs personal follow-up');\n  const c = ownerFor(lead.team, settings);\n  if (!c) flags.push(`No owner set for team ${lead.team || '?'}`);\n  const row = {\n    'Received at': (existing && existing['Received at']) || fmt(ist(receivedAt)), 'Lead ID': lead.leadId || `no-id-${receivedAt.getTime()}`,\n    Name: lead.name, Phone: lead.phone, Email: lead.email, Source: lead.source, Interest: lead.interest,\n    Owner: (c && c.Name) || '', Status: (existing && existing.Status) || 'New', Flags: flags.join('; '),\n  };\n  const replyText = hasContact(lead) ? buildReplyText(lead) : '';\n  const ownerText = `New lead from ${lead.source || 'form'}: ${lead.name || '?'} asking about \"${lead.interest || '?'}\". ${replyText ? 'Replied instantly.' : 'Could not reply — no phone or email.'}`;\n  const subject = `New lead: ${lead.name || '?'} — ${lead.interest || 'no interest given'}`;\n  return {\n    row, replyPhone: lead.phone || '', replyEmail: lead.email || '', replyText,\n    to: (c && c.WhatsApp) || null, ownerEmail: c ? c.Email : '', ownerText,\n    subject: row.Flags ? `⚠ ${subject}` : subject, updated: !!existing,\n  };\n}\n\n// Morning digest: yesterday's leads that still need a human follow-up (flagged, or after-hours).\nfunction dailyDigest(rows, now, sheetUrl) {\n  const n = ist(now);\n  const today = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate());\n  const since = today - 86400000;\n  const recent = (rows || []).filter((r) => { const d = ist2(r['Received at']); return d && d.getTime() >= since; });\n  const needsFollowUp = recent.filter((r) => r.Flags && r.Status === 'New');\n  return [\n    `Leads digest – ${nice(n)}`,\n    `Replied to in the last 24h: ${recent.length}`,\n    `Still need a human follow-up: ${needsFollowUp.length}`,\n    ...(needsFollowUp.length ? needsFollowUp.slice(0, 5).map((r) => `- ${r.Name} (${r.Source}): ${r.Flags}`) : []),\n    `Full list: ${sheetUrl}`,\n  ].join('\\n');\n}\n\nfunction ist2(s) {\n  const m = String(s || '').match(/^(\\d{4})-(\\d{2})-(\\d{2})(?:[ T](\\d{2}):(\\d{2}))?/);\n  return m ? new Date(Date.UTC(+m[1], m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0))) : null;\n}\n\n// ---- HTML email (inline styles only: email clients drop <style> blocks) ----\nconst esc = (v) => String(v == null ? '' : v).replace(/[&<>\"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' })[ch]);\nconst FONT = \"font-family:Arial,Helvetica,sans-serif;color:#1f2937;\";\nfunction shell(title, colour, body, sheetUrl, footer) {\n  return `<div style=\"${FONT}max-width:560px;margin:0 auto;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden\">`\n    + `<div style=\"background:${colour};color:#fff;padding:14px 18px;font-size:18px;font-weight:bold\">${title}</div>`\n    + `<div style=\"padding:16px 18px\">${body}`\n    + `<p style=\"margin:18px 0 4px\"><a href=\"${esc(sheetUrl)}\" style=\"background:#0f766e;color:#fff;text-decoration:none;padding:9px 14px;border-radius:6px;font-size:14px;display:inline-block\">Open Leads sheet</a></p>`\n    + `</div><div style=\"padding:10px 18px;background:#f9fafb;color:#6b7280;font-size:12px\">${footer}</div></div>`;\n}\nconst tr = (k, v, strong) => `<tr><td style=\"padding:6px 10px 6px 0;color:#6b7280;font-size:14px;white-space:nowrap;vertical-align:top\">${k}</td>`\n  + `<td style=\"padding:6px 0;font-size:14px;${strong ? 'font-weight:bold;' : ''}\">${v || '<span style=\"color:#b91c1c\">not set</span>'}</td></tr>`;\n\nfunction alertHtml(resp, sheetUrl) {\n  const r = resp.row;\n  const banner = r.Flags\n    ? `<div style=\"background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;color:#92400e;padding:10px 12px;margin-bottom:14px;font-size:14px\">⚠ ${esc(r.Flags)}</div>` : '';\n  const body = banner + `<table style=\"border-collapse:collapse;width:100%\">`\n    + tr('Name', esc(r.Name), true) + tr('Source', esc(r.Source)) + tr('Asking about', esc(r.Interest))\n    + tr('Phone', esc(r.Phone)) + tr('Email', esc(r.Email)) + tr('Owner', esc(r.Owner)) + tr('Status', esc(r.Status))\n    + `</table>`;\n  const title = `${resp.updated ? 'Updated: ' : ''}New lead${r.Name ? ` – ${esc(r.Name)}` : ''}`;\n  return shell(title, r.Flags ? '#b45309' : '#0f766e', body, sheetUrl, 'Sent the moment a new lead comes in — the lead already got an instant reply; this is for your team.');\n}\n\nfunction digestHtml(rows, now, sheetUrl) {\n  const n = ist(now);\n  const today = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate());\n  const since = today - 86400000;\n  const recent = (rows || []).filter((r) => { const d = ist2(r['Received at']); return d && d.getTime() >= since; });\n  const needsFollowUp = recent.filter((r) => r.Flags && r.Status === 'New');\n  const tile = (label, num, colour) => `<td style=\"padding:4px;width:50%\"><div style=\"border:1px solid #e5e7eb;border-radius:6px;padding:10px;text-align:center\">`\n    + `<div style=\"font-size:24px;font-weight:bold;color:${colour}\">${num}</div><div style=\"font-size:12px;color:#6b7280\">${label}</div></div></td>`;\n  const body = `<table style=\"border-collapse:collapse;width:100%\"><tr>`\n    + tile('Replied in last 24h', recent.length, '#0f766e')\n    + tile('Still need a human', needsFollowUp.length, needsFollowUp.length ? '#b45309' : '#0f766e')\n    + `</tr></table>`\n    + (needsFollowUp.length ? `<p style=\"margin:16px 0 6px;font-weight:bold;font-size:14px\">Need a human follow-up</p><ul style=\"margin:0;padding-left:18px;font-size:14px\">${needsFollowUp.map((r) => `<li style=\"margin:3px 0\">${esc(r.Name)} (${esc(r.Source)}): ${esc(r.Flags)}</li>`).join('')}</ul>` : '');\n  return shell(`Leads digest – ${nice(n)}`, '#0f766e', body, sheetUrl, 'Sent every morning — everything else already got an instant reply overnight.');\n}\n\nif (typeof module !== 'undefined') module.exports = { fromIntake, hasContact, isAfterHours, ownerFor, buildReplyText, buildResponse, dailyDigest, alertHtml, digestHtml };\n\nconst rows = $('Read Leads').all().map((i) => i.json).filter((r) => r.Status);\nconst text = dailyDigest(rows, new Date(), 'https://docs.google.com/spreadsheets/d/REPLACE_WITH_SHEET_ID');\nconst html = digestHtml(rows, new Date(), 'https://docs.google.com/spreadsheets/d/REPLACE_WITH_SHEET_ID');\nreturn $('Read Settings (Digest)').all().map((i) => i.json)\n  .filter((s) => ['Team Owner', 'Fallback Owner'].includes(s.Role) && (String(s.WhatsApp || '').trim() || String(s.Email || '').trim()))\n  .map((s) => ({ json: { _to: String(s.WhatsApp || '').trim(), _email: String(s.Email || '').trim(), _subject: text.split('\\n')[0], _text: text, _html: html } }))\n  .filter((m, i, all) => all.findIndex((x) => x._to === m._to && x._email === m._email) === i);"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000020",
+      "name": "Email – daily digest",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        900,
+        1020
+      ],
+      "parameters": {
+        "sendTo": "={{ $json._email }}",
+        "subject": "={{ $json._subject }}",
+        "emailType": "html",
+        "message": "={{ $json._html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "frGmail00000000001",
+          "name": "Gmail account"
+        }
+      },
+      "webhookId": "9e1a0000-0000-4000-8000-000000000020"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000021",
+      "name": "WhatsApp – daily digest",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        780
+      ],
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "REPLACE_WITH_WHATSAPP_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $json._to }}",
+        "textBody": "={{ $json._text }}",
+        "additionalFields": {}
+      },
+      "credentials": {
+        "whatsAppApi": {
+          "id": "frWhatsApp0000001",
+          "name": "WhatsApp account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Intake – new lead": {
+      "main": [
+        [
+          {
+            "node": "Read Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Settings": {
+      "main": [
+        [
+          {
+            "node": "Read existing lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read existing lead": {
+      "main": [
+        [
+          {
+            "node": "Build Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Response": {
+      "main": [
+        [
+          {
+            "node": "Leads – add or update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leads – add or update": {
+      "main": [
+        [
+          {
+            "node": "Has contact to reply to?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Has owner contact?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has contact to reply to?": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp – reply to lead (needs approved template)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email – reply to lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Has owner contact?": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp – alert owner",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email – alert owner",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Every morning": {
+      "main": [
+        [
+          {
+            "node": "Read Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Leads": {
+      "main": [
+        [
+          {
+            "node": "Read Settings (Digest)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Settings (Digest)": {
+      "main": [
+        [
+          {
+            "node": "Build digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build digest": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp – daily digest",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email – daily digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "Asia/Kolkata",
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
