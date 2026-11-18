@@ -23,7 +23,7 @@ rules that are tested are the same ones that run.
 
 ## After-hours rule
 
-Business hours are Monday–Friday, 9:00–18:00 IST. The reply to the lead goes out **immediately, any time** —
+Business hours are Monday–Friday, 9am–6pm in the business's own timezone, set once during setup. The reply to the lead goes out **immediately, any time** —
 that's the entire point of the workflow. The after-hours check only adds a flag for the owner alert and the morning
 digest, so a human still follows up personally once the day starts, instead of the lead being forgotten.
 
