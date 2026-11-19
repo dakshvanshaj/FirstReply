@@ -1,5 +1,7 @@
 # FirstReply (n8n)
 
+[![Tests](https://github.com/dakshvanshaj/FirstReply/actions/workflows/test.yml/badge.svg)](https://github.com/dakshvanshaj/FirstReply/actions/workflows/test.yml)
+
 Never let an interested lead go quiet — a new-lead instant-response automation.
 
 **Docs:** https://dakshvanshaj.com/first-reply/
