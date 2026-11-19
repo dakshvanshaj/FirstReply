@@ -4,7 +4,7 @@
 
 Never let an interested lead go quiet. A new-lead instant-response automation.
 
-**Docs:** https://dakshvanshaj.com/first-reply/
+**Docs:** https://dakshvanshaj.com/FirstReply/
 
 - [What it does and why](docs/index.md)
 - [How it works](docs/how-it-works.md): the flow, the after-hours rule, flags
